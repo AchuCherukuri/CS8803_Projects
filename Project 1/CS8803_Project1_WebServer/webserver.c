@@ -26,7 +26,8 @@ int main(int argc, char **argv) {
 	int socket_fd = 0; //server socket file description
 	int client_socket_fd = 0; //client socket file description
 
-	char buffer[BUFFER_SIZE]; //buffer for communication between server and client
+	char comm_buffer[BUFFER_SIZE]; //buffer for communication between server and client
+	char file_buffer[BUFFER_SIZE]; //buffer for reading the requested file
 
 	int num_bytes = 0; //number of bytes read from client
 
@@ -38,6 +39,7 @@ int main(int argc, char **argv) {
 	struct hostent *client_host_info; //client host information
 	char *client_host_ip; //client host ip address
 	socklen_t client_addr_len;
+	char *get_file_request_token;
 
 	// Create socket (IPv4, stream-based, protocol likely set to TCP)
 	if (0 > (socket_fd = socket(AF_INET, SOCK_STREAM, 0))) {
@@ -99,25 +101,40 @@ int main(int argc, char **argv) {
 		fprintf(stdout, "\nServer established connection with %s (%s)\n", client_host_info->h_name, client_host_ip);
 
 		// Read request from the client and parse the request protocol
-		bzero(buffer, BUFFER_SIZE);
-		num_bytes = read(client_socket_fd, buffer, BUFFER_SIZE);
+		bzero(comm_buffer, BUFFER_SIZE);
+		num_bytes = read(client_socket_fd, comm_buffer, BUFFER_SIZE);
 		if (num_bytes == 0) {
 			fprintf(stderr, "server could not read from socket\n");
 		} else {
-			fprintf(stdout, "\nServer received %d bytes: %s\n", num_bytes, buffer);
+			fprintf(stdout, "\nServer received %d bytes: %s\n", num_bytes, comm_buffer);
 
-			char *get_file_request_token = strtok(buffer, " ");
-			 if (strcmp(get_file_request_token, "GetFile") == 0) {
-				 get_file_request_token = strtok(NULL, " ");
-				 if (strcmp(get_file_request_token, "GET") == 0) {
-					 get_file_request_token = strtok(NULL, " ");
-				 }
-			 }
+			get_file_request_token = strtok(comm_buffer, " ");
+			if (strcmp(get_file_request_token, "GetFile") == 0) {
+				get_file_request_token = strtok(NULL, " ");
+				if (strcmp(get_file_request_token, "GET") == 0) {
+					get_file_request_token = strtok(NULL, " ");
+				}
+			}
 			 fprintf(stdout, "\nThe client is asking for this file: %s\n", get_file_request_token);
 		}
 
-		char response[] = "Hey, I received your request, and I am going to"
+		char response[] = "\nHey, I received your request, and I am going to"
 				" send you the file.\n";
+
+		FILE *fid = fopen(get_file_request_token, "r");
+		if (fid == NULL) {
+			printf("\nFile open error!\n");
+			return 1;
+		} else {
+			printf("\nFile opened! Starting to read and send file...\n");
+		}
+
+		while(1) {
+
+		}
+
+		fclose(fid);
+
 
 		// Echo back to the client
 		if (0 > write(client_socket_fd, response, strlen(response))) {

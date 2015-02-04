@@ -17,15 +17,8 @@
 #define SERVER_ADDR "localhost"
 #define SERVER_PORT 8888
 #define BUFFER_SIZE 1024
-#define FILE_NAME "/home/adminuser/Documents/CS8803/Project1/skeleton/lastname-firstname-pr1/1kb-sample-file-2.png"
+#define FILE_NAME "/home/zhihao/Documents/GaTech/CS8803/Project1/skeleton/lastname-firstname-pr1/1kb-sample-file-2.png"
 //=============================================================================
-
-//The GetFile Protocol
-const char * get_file_request(char *filename) {
-	char get_file_content[250] = "GetFile GET ";
-	printf("The header is: %s\n", get_file_content);
-	return strcat(get_file_content, filename);
-}
 
 int main(int argc, char **argv) {
 
@@ -60,13 +53,14 @@ int main(int argc, char **argv) {
         fprintf(stdout, "client connected to to %s:%d!\n", SERVER_ADDR, SERVER_PORT);
     }
 
-    //construct a GetFile protocolcharasdfasdf
-    const char *file_request = get_file_request("/home/adminuser/Documents/CS8803/Project1/skeleton/lastname-firstname-pr1/1kb-sample-file-2.png");
+    char get_file_content[250] = "GetFile GET ";
 
-    fprintf(stdout, "The GetFile Request is: %s", file_request);
+    strcat(get_file_content, FILE_NAME);
+
+    fprintf(stdout, "The GetFile Request is: %s\n", get_file_content);
 
     // Send file request
-    if (0 > send(socket_fd, file_request, strlen(file_request), 0)) {
+    if (0 > send(socket_fd, get_file_content, strlen(get_file_content), 0)) {
         fprintf(stderr, "client failed to send echo message");
         close(socket_fd);
         exit(1);
