@@ -15,6 +15,8 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /* CONSTANTS ===========================================================*/
 #define SERVER_PORT 8888
@@ -27,7 +29,8 @@ int main(int argc, char **argv) {
 	int client_socket_fd = 0; //client socket file description
 
 	char comm_buffer[BUFFER_SIZE]; //buffer for communication between server and client
-	char file_buffer[BUFFER_SIZE]; //buffer for reading the requested file
+	char file_buffer[BUFFER_SIZE]; //buffer for GetFile Protocol sending to client
+	char file_stream[512]; //buffer for file stream read from the requested file
 
 	int num_bytes = 0; //number of bytes read from client
 
@@ -120,28 +123,50 @@ int main(int argc, char **argv) {
 
 		char response[] = "\nHey, I received your request, and I am going to"
 				" send you the file.\n";
-
-		FILE *fid = fopen(get_file_request_token, "r");
-		if (fid == NULL) {
-			printf("\nFile open error!\n");
-			return 1;
-		} else {
-			printf("\nFile opened! Starting to read and send file...\n");
-		}
-
-		while(1) {
-
-		}
-
-		fclose(fid);
-
-
 		// Echo back to the client
 		if (0 > write(client_socket_fd, response, strlen(response))) {
 			fprintf(stderr, "server could not write back to socket\n");
 		} else {
 			fprintf(stdout, "\nServer sending message back to client\n");
 		}
+
+		//open the requested file
+		int fid = open(get_file_request_token, O_RDONLY);
+		if (fid == -1) {
+			printf("\nFile open error!\n");
+			strcpy(file_buffer, "GetFile FILE_NOT_FOUND 0 0");
+			if (0 > write(client_socket_fd, file_buffer, strlen(file_buffer))) {
+				fprintf(stderr, "server could not write back to socket\n");
+			} else {
+				fprintf(stdout, "\nServer sending message back to client with: %s\n", file_buffer);
+			}
+			continue;
+		} else {
+			printf("\nFile opened! Starting to read and send file...\n");
+			strcpy(file_buffer, "GetFile OK ");
+
+			while(1) {
+				int bytes_read = read(fid, file_stream, 512);
+				if (bytes_read == 0) {
+					break;
+				} else {
+					char bytes_read_str[10];
+					sprintf(bytes_read_str, "%d", bytes_read);
+					strcat(file_buffer, bytes_read_str);
+					strcat(file_buffer, " ");
+					strcat(file_buffer, file_stream);
+
+					if (0 > write(client_socket_fd, file_buffer, strlen(file_buffer))) {
+						fprintf(stderr, "server could not write back to socket\n");
+						break;
+					} else {
+						fprintf(stdout, "\nServer sending message back to client with: %s\n", file_buffer);
+					}
+				}
+			}
+		}
+
+		close(fid);
 
 		printf("\nClosing the socket\n");
 		//close client socket
