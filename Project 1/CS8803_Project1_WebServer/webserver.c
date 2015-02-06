@@ -156,11 +156,18 @@ int main(int argc, char **argv) {
 					strcat(file_buffer, " ");
 					strcat(file_buffer, file_stream);
 
-					if (0 > write(client_socket_fd, file_buffer, strlen(file_buffer))) {
-						fprintf(stderr, "server could not write back to socket\n");
-						break;
-					} else {
-						fprintf(stdout, "\nServer sending message back to client with: %s\n", file_buffer);
+					void *writing_position = file_buffer; //keeps track of where
+					//in the buffer we are
+					while (bytes_read > 0) {
+						int bytes_written = write(client_socket_fd, writing_position, strlen(bytes_read));
+						if (bytes_written <= 0) {
+							fprintf(stderr, "\nServer could not write back to socket\n");
+							break;
+						} else {
+							bytes_read -= bytes_written;
+							writing_position += bytes_written;
+							fprintf(stdout, "\nServer sending message back to client with: %s\n", file_buffer);
+						}
 					}
 				}
 			}
