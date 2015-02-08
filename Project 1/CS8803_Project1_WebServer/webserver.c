@@ -123,18 +123,18 @@ int main(int argc, char **argv) {
 			 fprintf(stdout, "\nThe client is asking for this file: %s\n", get_file_request_token);
 		}
 
-		char response[] = "\nHey, I received your request, and I am going to"
-				" send you the file.\n";
-		// Echo back to the client
-		if (0 > write(client_socket_fd, response, strlen(response))) {
-			fprintf(stderr, "server could not write back to socket\n");
-		} else {
-			fprintf(stdout, "\nServer sending message back to client\n");
-		}
+//		char response[] = "\nHey, I received your request, and I am going to"
+//				" send you the file.\n";
+//		// Echo back to the client
+//		if (0 > write(client_socket_fd, response, strlen(response))) {
+//			fprintf(stderr, "server could not write back to socket\n");
+//		} else {
+//			fprintf(stdout, "\nServer sending message back to client\n");
+//		}
 
 		//open the requested file
-		FILE *fid = fopen(get_file_request_token, "r");
-		if (fid == NULL) {
+		int fid = open(get_file_request_token, O_RDONLY);
+		if (fid < 0) {
 			fprintf(stderr, "\nFile open failed with error: %s!\n", strerror(errno));
 			bzero(protocol_header_buffer, 1024);
 			strcpy(protocol_header_buffer, "GetFile FILE_NOT_FOUND 0 0");
@@ -177,7 +177,7 @@ int main(int argc, char **argv) {
 						} else {
 							total_to_write -= bytes_written;
 							writing_position += bytes_written;
-							fprintf(stdout, "\nServer sending message back to client with: %s\n", writing_position);
+							fprintf(stdout, "\nServer sending message back to client with: %s\n", protocol_header_buffer);
 						}
 					}
 				}

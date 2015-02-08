@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
 
     // Process response from server
     bzero(buffer, BUFFER_SIZE);
-    int fid = open(FILE_COPY_PATH, O_CREAT, S_IWUSR);
+    int fid = open(FILE_COPY_PATH, O_RDWR|O_CREAT, S_IWUSR|S_IRUSR);
 
     int total_file_size = 0;
 
@@ -106,19 +106,19 @@ int main(int argc, char **argv) {
 					//parse server declared file read size to integer
 					int server_sent_size = atoi(server_read_file_size_str);
 					total_file_size += server_sent_size;
-					int file_size_to_write = total_file_size;
+					int file_size_to_write = file_stream_len;
 
 					file_stream_token = strtok(NULL, " ");
 					void *writing_position = file_stream_token;
 					while(file_size_to_write > 0) {
 						int bytes_written = write(fid, writing_position, strlen(file_stream_token));
 						if (bytes_written <= 0) {
-							fprintf(stderr, "\Could not write to the file with error: %s\n", strerror(errno));
+							fprintf(stderr, "\nCould not write to the file with error: %s\n", strerror(errno));
 							break;
 						} else {
 							file_size_to_write -= bytes_written;
 							writing_position += bytes_written;
-							fprintf(stdout, "\nServer sending message back to client with: %s\n", writing_position);
+							fprintf(stdout, "\nServer sending message back to client with: %s\n", file_stream_token);
 						}
 					}
 				}
@@ -133,12 +133,12 @@ int main(int argc, char **argv) {
     			while(file_size_to_write > 0) {
 					int bytes_written = write(fid, writing_position, strlen(file_stream_token));
 					if (bytes_written <= 0) {
-						fprintf(stderr, "\Could not write to the file with error: %s\n", strerror(errno));
+						fprintf(stderr, "\nCould not write to the file with error: %s\n", strerror(errno));
 						break;
 					} else {
 						file_size_to_write -= bytes_written;
 						writing_position += bytes_written;
-						fprintf(stdout, "\nServer sending message back to client with: %s\n", writing_position);
+						fprintf(stdout, "\nServer sending message back to client with: %s\n", file_stream_token);
 					}
 				}
     		}
@@ -147,7 +147,7 @@ int main(int argc, char **argv) {
 
     close(fid);
     fprintf(stdout, "\nTotoal size of the file received: %d bytes\n", total_file_size);
-    fprintf(stdout, "\nFile saved at: %\n", FILE_COPY_PATH);
+    fprintf(stdout, "\nFile saved at: %s\n", FILE_COPY_PATH);
 
     // Close the socket and return the response length (in bytes)
     close(socket_fd);
