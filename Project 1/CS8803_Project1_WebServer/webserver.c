@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
 	int client_socket_fd = 0; //client socket file description
 
 	char comm_buffer[BUFFER_SIZE]; //buffer for normal communication between server and client
-	char protocol_header_buffer[512]; //buffer for GetFile Protocol sending to client
+	char protocol_header_buffer[BUFFER_SIZE]; //buffer for GetFile Protocol sending to client
 	char file_stream[BUFFER_SIZE]; //buffer for file stream read from the requested file
 
 	int num_bytes = 0; //number of bytes read from client
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 		FILE *fid = fopen(get_file_request_token, "r");
 		if (fid == NULL) {
 			fprintf(stderr, "\nFile open failed with error: %s!\n", strerror(errno));
-			bzero(protocol_header_buffer, 512);
+			bzero(protocol_header_buffer, 1024);
 			strcpy(protocol_header_buffer, "GetFile FILE_NOT_FOUND 0 0");
 			if (0 > write(client_socket_fd, protocol_header_buffer, strlen(protocol_header_buffer))) {
 				fprintf(stderr, "server could not write back to socket with error: %s\n", strerror(errno));
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 			continue;
 		} else {
 			printf("\nFile opened! Starting to read and send file...\n");
-			bzero(protocol_header_buffer, 512);
+			bzero(protocol_header_buffer, 1024);
 			strcpy(protocol_header_buffer, "GetFile OK ");
 
 			while(1) {
