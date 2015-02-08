@@ -12,12 +12,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 /* CONSTANTS =============================================================== */
 #define SERVER_ADDR "localhost"
 #define SERVER_PORT 8888
 #define BUFFER_SIZE 1024
 #define FILE_NAME "/home/zhihao/Documents/GaTech/CS8803/Project1/skeleton/lastname-firstname-pr1/1kb-sample-file-2.png"
+#define FILE_COPY_PATH "/home/zhihao/Downloads/the_file_copy.png"
 //=============================================================================
 
 int main(int argc, char **argv) {
@@ -57,7 +60,7 @@ int main(int argc, char **argv) {
 
     strcat(get_file_content, FILE_NAME);
 
-    fprintf(stdout, "The GetFile Request is: %s\n", get_file_content);
+    fprintf(stdout, "\nThe GetFile Request is: %s\n", get_file_content);
 
     // Send file request
     if (0 > send(socket_fd, get_file_content, strlen(get_file_content), 0)) {
@@ -68,12 +71,43 @@ int main(int argc, char **argv) {
 
     // Process response from server
     bzero(buffer, BUFFER_SIZE);
-    if(0 > read(socket_fd, buffer, BUFFER_SIZE)) {
-        fprintf(stderr, "client could not read response from server\n");
-        close(socket_fd);
-        exit(1);
-    } else {
-        fprintf(stdout, "echo from server: %s\n", buffer);
+    int protocol_declared_size = 0;
+    int fid = open(FILE_COPY_PATH, O_CREAT, S_IWUSR);
+    while (1) {
+    	int bytes_read = read(socket_fd, buffer, BUFFER_SIZE);
+    	if (bytes_read < 0) {
+    		fprintf(stderr, "\nCouldn't read file from socket with error: %s\n", strerror(errno));
+    	}
+    	if (bytes_read == 0) {
+    		break;
+    	}
+    	else {
+    		char *file_stream_token = strtok(buffer, " ");
+    		if (strcmp(file_stream_token, "GetFile") == 0) {
+    			file_stream_token = strtok(NULL, " ");
+				if (strcmp(file_stream_token, "OK") == 0) {
+					file_stream_token = strtok(NULL, " ");
+					protocol_declared_size += file_stream_token;
+					file_stream_token = strtok(NULL, " ");
+					void *writing_position = file_stream_token;
+					while(bytes_read > 0) {
+						int bytes_written = write(fid, writing_position, strlen(file_stream_token));
+						if (bytes_written <= 0) {
+							fprintf(stderr, "\Could not write to the file\n");
+							break;
+						} else {
+							bytes_read -= bytes_written;
+							writing_position += bytes_written;
+							fprintf(stdout, "\nServer sending message back to client with: %s\n", writing_position);
+						}
+					}
+				}
+				else if (strcmp(file_stream_token, "FILE_NOT_FOUND")) {
+					fprintf(stderr, "Error: FILE NOT FOUND");
+					exit(0);
+				}
+    		}
+    	}
     }
 
     // Close the socket and return the response length (in bytes)

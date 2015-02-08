@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <errno.h>
 
 /* CONSTANTS ===========================================================*/
 #define SERVER_PORT 8888
@@ -28,9 +29,9 @@ int main(int argc, char **argv) {
 	int socket_fd = 0; //server socket file description
 	int client_socket_fd = 0; //client socket file description
 
-	char comm_buffer[BUFFER_SIZE]; //buffer for communication between server and client
-	char file_buffer[BUFFER_SIZE]; //buffer for GetFile Protocol sending to client
-	char file_stream[512]; //buffer for file stream read from the requested file
+	char comm_buffer[BUFFER_SIZE]; //buffer for normal communication between server and client
+	char protocol_header_buffer[512]; //buffer for GetFile Protocol sending to client
+	char file_stream[BUFFER_SIZE]; //buffer for file stream read from the requested file
 
 	int num_bytes = 0; //number of bytes read from client
 
@@ -81,8 +82,9 @@ int main(int argc, char **argv) {
     client_addr_len = sizeof(client);
 
     while(1) {
-    		printf("\nWaiting for a connection\n");
-    		// Accept a new client
+    	printf("\nWaiting for a connection\n");
+
+    	// Accept a new client
 		if (0 > (client_socket_fd = accept(socket_fd, (struct sockaddr *)&client, &client_addr_len))) {
 			fprintf(stderr, "server accept failed\n");
 		}
@@ -92,7 +94,7 @@ int main(int argc, char **argv) {
 
 		printf("\nGot a connection!\n");
 
-		 // Determine who sent the echo so that we can respond
+		// Determine who sent the echo so that we can respond
 		client_host_info = gethostbyaddr((const char *)&client.sin_addr.s_addr, sizeof(client.sin_addr.s_addr), AF_INET);
 		if (client_host_info == NULL) {
 			fprintf(stderr, "server could not determine client host address\n");
@@ -131,42 +133,51 @@ int main(int argc, char **argv) {
 		}
 
 		//open the requested file
-		int fid = open(get_file_request_token, O_RDONLY);
-		if (fid == -1) {
-			printf("\nFile open error!\n");
-			strcpy(file_buffer, "GetFile FILE_NOT_FOUND 0 0");
-			if (0 > write(client_socket_fd, file_buffer, strlen(file_buffer))) {
-				fprintf(stderr, "server could not write back to socket\n");
+		FILE *fid = fopen(get_file_request_token, "r");
+		if (fid == NULL) {
+			fprintf(stderr, "\nFile open failed with error: %s!\n", strerror(errno));
+			bzero(protocol_header_buffer, 512);
+			strcpy(protocol_header_buffer, "GetFile FILE_NOT_FOUND 0 0");
+			if (0 > write(client_socket_fd, protocol_header_buffer, strlen(protocol_header_buffer))) {
+				fprintf(stderr, "server could not write back to socket with error: %s\n", strerror(errno));
 			} else {
-				fprintf(stdout, "\nServer sending message back to client with: %s\n", file_buffer);
+				fprintf(stdout, "\nServer sending message back to client with: %s\n", protocol_header_buffer);
 			}
 			continue;
 		} else {
 			printf("\nFile opened! Starting to read and send file...\n");
-			strcpy(file_buffer, "GetFile OK ");
+			bzero(protocol_header_buffer, 512);
+			strcpy(protocol_header_buffer, "GetFile OK ");
 
 			while(1) {
-				int bytes_read = read(fid, file_stream, 512);
+				int bytes_read = read(fid, file_stream, 1024);
+				if (bytes_read < 0) {
+					fprintf(stderr, "\nCouldn't read from file, error: %s\n", strerror(errno));
+					break;
+				}
 				if (bytes_read == 0) {
 					break;
 				} else {
 					char bytes_read_str[10];
 					sprintf(bytes_read_str, "%d", bytes_read);
-					strcat(file_buffer, bytes_read_str);
-					strcat(file_buffer, " ");
-					strcat(file_buffer, file_stream);
+					strcat(protocol_header_buffer, bytes_read_str);
+					strcat(protocol_header_buffer, " ");
+					int protocol_header_buffer_len = strlen(protocol_header_buffer);
+					strcat(protocol_header_buffer, file_stream);
 
-					void *writing_position = file_buffer; //keeps track of where
-					//in the buffer we are
-					while (bytes_read > 0) {
-						int bytes_written = write(client_socket_fd, writing_position, strlen(bytes_read));
+					//keeps track of where in the buffer we are
+					void *writing_position = protocol_header_buffer;
+
+					int total_to_write = protocol_header_buffer_len + bytes_read;
+					while (total_to_write > 0) {
+						int bytes_written = write(client_socket_fd, writing_position, strlen(protocol_header_buffer));
 						if (bytes_written <= 0) {
-							fprintf(stderr, "\nServer could not write back to socket\n");
-							break;
+							fprintf(stderr, "\nServer could not write back to socket with error: %s\n", strerror(errno));
+							exit(1);
 						} else {
-							bytes_read -= bytes_written;
+							total_to_write -= bytes_written;
 							writing_position += bytes_written;
-							fprintf(stdout, "\nServer sending message back to client with: %s\n", file_buffer);
+							fprintf(stdout, "\nServer sending message back to client with: %s\n", writing_position);
 						}
 					}
 				}
