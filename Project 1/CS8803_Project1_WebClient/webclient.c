@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
     int socket_fd = 0;
     struct sockaddr_in server_socket_addr;
-    char buffer[BUFFER_SIZE];
+    char raw_buffer[BUFFER_SIZE];
 
     // Converts localhost into 0.0.0.0
     struct hostent *he = gethostbyname(SERVER_ADDR);
@@ -70,13 +70,13 @@ int main(int argc, char **argv) {
     }
 
     // Process response from server
-    bzero(buffer, BUFFER_SIZE);
-    int fid = open(FILE_COPY_PATH, O_RDWR|O_CREAT, S_IWUSR|S_IRUSR);
+    bzero(raw_buffer, BUFFER_SIZE);
+    int fid = open(FILE_COPY_PATH, O_CREAT|O_RDWR, S_IWUSR|S_IWGRP|S_IWOTH);
 
     int total_file_size = 0;
 
     while (1) {
-    	int bytes_read = read(socket_fd, buffer, BUFFER_SIZE);
+    	int bytes_read = read(socket_fd, raw_buffer, BUFFER_SIZE);
     	if (bytes_read < 0) {
     		fprintf(stderr, "\nCouldn't read file from socket with error: %s\n", strerror(errno));
     	}
@@ -84,8 +84,10 @@ int main(int argc, char **argv) {
     		break;
     	}
     	else {
-    		int total_buffer_len = strlen(buffer);
-
+    		//int total_buffer_len = strlen(buffer);
+    		char buffer[1024];
+    		memset(buffer, '\0', sizeof(buffer));
+    		strcpy(buffer, raw_buffer);
     		char *file_stream_token = strtok(buffer, " ");
     		if (strcmp(file_stream_token, "GetFile") == 0) {
     			file_stream_token = strtok(NULL, " ");
@@ -101,21 +103,27 @@ int main(int argc, char **argv) {
 					//add the length of sent size string into protocol header length
 					int server_sent_size_str_len = strlen(server_read_file_size_str);
 					header_len += server_sent_size_str_len;
-					int file_stream_len = total_buffer_len - header_len;
+
 
 					//parse server declared file read size to integer
 					int server_sent_size = atoi(server_read_file_size_str);
+
+					//int file_stream_len = server_sent_size;//total_buffer_len - header_len;
+
 					total_file_size += server_sent_size;
-					int file_size_to_write = file_stream_len;
+					int file_size_to_write = server_sent_size;
 
 					file_stream_token = strtok(NULL, " ");
 					void *writing_position = file_stream_token;
 					while(file_size_to_write > 0) {
-						int bytes_written = write(fid, writing_position, strlen(file_stream_token));
-						if (bytes_written <= 0) {
+						int bytes_written = write(fid, writing_position, server_sent_size);
+						if (bytes_written < 0) {
 							fprintf(stderr, "\nCould not write to the file with error: %s\n", strerror(errno));
+							exit(1);
+						} else if (bytes_written == 0) {
 							break;
-						} else {
+						}
+						else {
 							file_size_to_write -= bytes_written;
 							writing_position += bytes_written;
 							fprintf(stdout, "\nServer sending message back to client with: %s\n", file_stream_token);

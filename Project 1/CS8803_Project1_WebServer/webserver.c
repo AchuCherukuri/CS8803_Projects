@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
 			strcpy(protocol_header_buffer, "GetFile OK ");
 
 			while(1) {
-				int bytes_read = read(fid, file_stream, 1024);
+				int bytes_read = read(fid, file_stream, 512);
 				if (bytes_read < 0) {
 					fprintf(stderr, "\nCouldn't read from file, error: %s\n", strerror(errno));
 					break;
