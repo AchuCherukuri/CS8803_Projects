@@ -19,15 +19,14 @@
 #define SERVER_ADDR "localhost"
 #define SERVER_PORT 8888
 #define BUFFER_SIZE 1024
-#define FILE_NAME "/home/zhihao/Documents/GaTech/CS8803/Project1/skeleton/lastname-firstname-pr1/1kb-sample-file-2.png"
-#define FILE_COPY_PATH "/home/zhihao/Downloads/the_file_copy.png"
+#define FILE_NAME "/home/zhihao/Documents/GaTech/CS8803/Project1/skeleton/lastname-firstname-pr1/1mb-sample-file-0.jpg"
+#define FILE_COPY_PATH "/home/zhihao/Downloads/the_file_copy.jpg"
 //=============================================================================
 
 int main(int argc, char **argv) {
 
     int socket_fd = 0;
     struct sockaddr_in server_socket_addr;
-    char raw_buffer[BUFFER_SIZE];
 
     // Converts localhost into 0.0.0.0
     struct hostent *he = gethostbyname(SERVER_ADDR);
@@ -70,13 +69,13 @@ int main(int argc, char **argv) {
     }
 
     // Process response from server
-    bzero(raw_buffer, BUFFER_SIZE);
-    int fid = open(FILE_COPY_PATH, O_CREAT|O_RDWR, S_IWUSR|S_IWGRP|S_IWOTH);
+    char buffer[BUFFER_SIZE];
+    FILE *file_id = fopen(FILE_COPY_PATH, "ab+");
 
     int total_file_size = 0;
 
     while (1) {
-    	int bytes_read = read(socket_fd, raw_buffer, BUFFER_SIZE);
+    	int bytes_read = recv(socket_fd, buffer, BUFFER_SIZE, 0);
     	if (bytes_read < 0) {
     		fprintf(stderr, "\nCouldn't read file from socket with error: %s\n", strerror(errno));
     	}
@@ -84,10 +83,9 @@ int main(int argc, char **argv) {
     		break;
     	}
     	else {
-    		//int total_buffer_len = strlen(buffer);
-    		char buffer[1024];
-    		memset(buffer, '\0', sizeof(buffer));
-    		strcpy(buffer, raw_buffer);
+
+    		printf("\nInitial buffer length: %u\n", (unsigned)strlen(buffer));
+
     		char *file_stream_token = strtok(buffer, " ");
     		if (strcmp(file_stream_token, "GetFile") == 0) {
     			file_stream_token = strtok(NULL, " ");
@@ -102,6 +100,7 @@ int main(int argc, char **argv) {
 					char *server_read_file_size_str = file_stream_token;
 					//add the length of sent size string into protocol header length
 					int server_sent_size_str_len = strlen(server_read_file_size_str);
+
 					header_len += server_sent_size_str_len;
 
 
@@ -116,7 +115,7 @@ int main(int argc, char **argv) {
 					file_stream_token = strtok(NULL, " ");
 					void *writing_position = file_stream_token;
 					while(file_size_to_write > 0) {
-						int bytes_written = write(fid, writing_position, server_sent_size);
+						int bytes_written = fwrite(writing_position, sizeof(char), bytes_read, file_id);
 						if (bytes_written < 0) {
 							fprintf(stderr, "\nCould not write to the file with error: %s\n", strerror(errno));
 							exit(1);
@@ -135,11 +134,10 @@ int main(int argc, char **argv) {
 					exit(0);
 				}
     		} else {
-    			int total_buffer_len = strlen(buffer);
-    			int file_size_to_write = total_buffer_len;
+    			int file_size_to_write = bytes_read;
     			void *writing_position = buffer;
     			while(file_size_to_write > 0) {
-					int bytes_written = write(fid, writing_position, strlen(file_stream_token));
+					int bytes_written = fwrite(writing_position, sizeof(char), bytes_read, file_id);
 					if (bytes_written <= 0) {
 						fprintf(stderr, "\nCould not write to the file with error: %s\n", strerror(errno));
 						break;
@@ -153,7 +151,7 @@ int main(int argc, char **argv) {
     	}
     }
 
-    close(fid);
+    fclose(file_id);
     fprintf(stdout, "\nTotoal size of the file received: %d bytes\n", total_file_size);
     fprintf(stdout, "\nFile saved at: %s\n", FILE_COPY_PATH);
 
