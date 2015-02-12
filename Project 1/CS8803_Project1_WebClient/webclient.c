@@ -18,7 +18,7 @@
 /* CONSTANTS =============================================================== */
 #define SERVER_ADDR "localhost"
 #define SERVER_PORT 8888
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 #define FILE_NAME "/home/zhihao/Documents/GaTech/CS8803/Project1/skeleton/lastname-firstname-pr1/1mb-sample-file-0.jpg"
 #define FILE_COPY_PATH "/home/zhihao/Downloads/the_file_copy.jpg"
 //=============================================================================
@@ -76,6 +76,11 @@ int main(int argc, char **argv) {
 
     while (1) {
     	int bytes_read = recv(socket_fd, buffer, BUFFER_SIZE, 0);
+
+    	printf("\nbytes read: %d\n", bytes_read);
+    	total_file_size += bytes_read;
+    	printf("\ntotal bytes read: %d\n", total_file_size);
+
     	if (bytes_read < 0) {
     		fprintf(stderr, "\nCouldn't read file from socket with error: %s\n", strerror(errno));
     	}
@@ -83,9 +88,6 @@ int main(int argc, char **argv) {
     		break;
     	}
     	else {
-
-    		printf("\nInitial buffer length: %u\n", (unsigned)strlen(buffer));
-
     		char *file_stream_token = strtok(buffer, " ");
     		if (strcmp(file_stream_token, "GetFile") == 0) {
     			file_stream_token = strtok(NULL, " ");
@@ -144,7 +146,7 @@ int main(int argc, char **argv) {
 					} else {
 						file_size_to_write -= bytes_written;
 						writing_position += bytes_written;
-						fprintf(stdout, "\nServer sending message back to client with: %s\n", file_stream_token);
+						//fprintf(stdout, "\nServer sending message back to client with: %s\n", file_stream_token);
 					}
 				}
     		}

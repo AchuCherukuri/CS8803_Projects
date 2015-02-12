@@ -21,7 +21,7 @@
 
 /* CONSTANTS ===========================================================*/
 #define SERVER_PORT 8888
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 2048
 /*======================================================================*/
 
 int main(int argc, char **argv) {
