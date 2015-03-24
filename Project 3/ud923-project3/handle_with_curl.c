@@ -7,6 +7,8 @@
 
 #include "gfserver.h"
 
+#define BUFFER_SIZE	4096
+
 struct MemoryStruct {
     char *memory;
     size_t size;
@@ -34,10 +36,11 @@ WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp)
 
 
 ssize_t handle_with_curl(gfcontext_t *ctx, char *path, void* arg){
-	int fildes;
-	size_t file_len, bytes_transferred, chunk_idx;
-	ssize_t read_len, write_len;
-	char buffer[4096];
+	int chunk_idx;
+	size_t bytes_transferred;
+	double file_len;
+	ssize_t write_len;
+	char buffer[BUFFER_SIZE];
 	char *data_dir = arg;
 
 	strcpy(buffer,data_dir);
@@ -77,23 +80,42 @@ ssize_t handle_with_curl(gfcontext_t *ctx, char *path, void* arg){
         /* If the file just wasn't found, then send FILE_NOT_FOUND code*/ 
         return gfs_sendheader(ctx, GF_FILE_NOT_FOUND, 0);
     } else {
-        info = curl_easy_getinfo(curl_handle, CURLINFO_SIZE_DOWNLOAD, file_len);
+        file_len = 0;
+        info = curl_easy_getinfo(curl_handle, CURLINFO_SIZE_DOWNLOAD, &file_len);
+             
         if (info != CURLE_OK) {
-            printf(curl_easy_strerror(info);
-        } else {
+            printf((char *)curl_easy_strerror(info));
+            
+            return EXIT_FAILURE;
+        } else {           
             gfs_sendheader(ctx, GF_OK, file_len);
             
             /* Sending the file contents chunk by chunk. */
             bytes_transferred = 0;
+            chunk_idx = 0;
             while(bytes_transferred < chunk.size){
-		        write_len = gfs_send(ctx, chunk.memory+bytes_transferred, chunk.size);
+                if (chunk.size-bytes_transferred >= 4096) {
+		            write_len = gfs_send(ctx, chunk.memory+chunk_idx, BUFFER_SIZE);
+		        } else {
+		            write_len = gfs_send(ctx, chunk.memory+chunk_idx, chunk.size-bytes_transferred);
+		        }
 		        if (write_len <= 0){
-			        fprintf(stderr, "handle_with_file write error");
+			        fprintf(stderr, "handle_with_curl write error");
 			        return EXIT_FAILURE;
 		        }
+		        chunk_idx += write_len;
 		        bytes_transferred += write_len;
 	        }
         }
     }
+    
+    /* cleanup curl stuff */
+    curl_easy_cleanup(curl_handle);
+    
+    free(chunk.memory);
+    
+    /* we're done with libcurl, so clean it up */
+    curl_global_cleanup();
+
 	return bytes_transferred;
 }

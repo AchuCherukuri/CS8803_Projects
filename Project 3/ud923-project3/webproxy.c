@@ -79,8 +79,6 @@ int main(int argc, char **argv) {
     }
   }
   
-  printf("I am running\n");
-  
   /* SHM initialization...*/
 
   /*Initializing server*/
@@ -92,6 +90,8 @@ int main(int argc, char **argv) {
   gfserver_setopt(&gfs, GFS_WORKER_FUNC, handle_with_curl);
   for(i = 0; i < nworkerthreads; i++)
     gfserver_setopt(&gfs, GFS_WORKER_ARG, i, server);
+
+  printf("I am running\n");
 
   /*Loops forever*/
   gfserver_serve(&gfs);
