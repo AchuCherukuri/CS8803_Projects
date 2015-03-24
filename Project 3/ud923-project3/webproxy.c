@@ -29,7 +29,7 @@ static struct option gLongOptions[] = {
   {NULL,            0,                      NULL,             0}
 };
 
-extern ssize_t handle_with_file(gfcontext_t *ctx, char *path, void* arg);
+extern ssize_t handle_with_curl(gfcontext_t *ctx, char *path, void* arg);
 
 static gfserver_t gfs;
 
@@ -89,9 +89,9 @@ int main(int argc, char **argv) {
   /*Setting options*/
   gfserver_setopt(&gfs, GFS_PORT, port);
   gfserver_setopt(&gfs, GFS_MAXNPENDING, 10);
-  gfserver_setopt(&gfs, GFS_WORKER_FUNC, handle_with_file);
+  gfserver_setopt(&gfs, GFS_WORKER_FUNC, handle_with_curl);
   for(i = 0; i < nworkerthreads; i++)
-    gfserver_setopt(&gfs, GFS_WORKER_ARG, i, "data");
+    gfserver_setopt(&gfs, GFS_WORKER_ARG, i, server);
 
   /*Loops forever*/
   gfserver_serve(&gfs);
