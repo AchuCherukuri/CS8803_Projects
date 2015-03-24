@@ -71,6 +71,9 @@ ssize_t handle_with_curl(gfcontext_t *ctx, char *path, void* arg){
     /* some servers don't like requests that are made without a user-agent
     field, so we provide one */
     curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, "libcurl-agent/1.0");
+    
+    /* request failure on HTTP response>=400*/
+    curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1L);
 
     /* get it! */
     res = curl_easy_perform(curl_handle);
@@ -94,7 +97,7 @@ ssize_t handle_with_curl(gfcontext_t *ctx, char *path, void* arg){
             bytes_transferred = 0;
             chunk_idx = 0;
             while(bytes_transferred < chunk.size){
-                if (chunk.size-bytes_transferred >= 4096) {
+                if (chunk.size-bytes_transferred >= BUFFER_SIZE) {
 		            write_len = gfs_send(ctx, chunk.memory+chunk_idx, BUFFER_SIZE);
 		        } else {
 		            write_len = gfs_send(ctx, chunk.memory+chunk_idx, chunk.size-bytes_transferred);
