@@ -162,8 +162,6 @@ int main(int argc, char **argv) {
     printf("%s semaphore is created\n", sem_name);
   }
 
-
-
   /*Initializing server*/
   gfserver_init(&gfs, nworkerthreads);
 
