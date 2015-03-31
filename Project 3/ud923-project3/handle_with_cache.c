@@ -4,8 +4,10 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <mqueue.h>
 
 #include "gfserver.h"
+
 
 //Replace with an implementation of handle_with_cache and any other
 //functions you may need.
@@ -16,6 +18,22 @@ ssize_t handle_with_cache(gfcontext_t *ctx, char *path, void* arg){
 	ssize_t read_len, write_len;
 	char buffer[4096];
 	char *data_dir = arg;
+
+	mqd_t request_mq, response_mq;
+
+	//open a message queue for receiving request
+	request_mq = mq_open("mq_request", O_CREAT);
+	if (request_mq < 0) {
+		perror("In mq_open()");
+		exit(1);
+	}
+	response_mq = mq_open("mq_response", O_CREAT);
+	if (response_mq < 0) {
+		perror("In mq_open()");
+		exit(1);
+	}
+
+
 
 	strcpy(buffer,data_dir);
 	strcat(buffer,path);

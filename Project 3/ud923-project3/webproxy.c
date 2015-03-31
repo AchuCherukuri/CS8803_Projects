@@ -12,7 +12,6 @@
 #include <semaphore.h>
 
 #include "gfserver.h"
-#include "queue.h"
                                                                 \
 #define USAGE                                                                 \
 "usage:\n"                                                                    \
@@ -37,6 +36,12 @@ static struct option gLongOptions[] = {
   {"server",        required_argument,      NULL,           's'},         
   {"help",          no_argument,            NULL,           'h'},
   {NULL,            0,                      NULL,             0}
+};
+
+struct ShmSem{
+   int shmfd;
+   sem_t *sem_id;
+   int inUse;
 };
 
 extern ssize_t handle_with_cache(gfcontext_t *ctx, char *path, void* arg);
@@ -124,13 +129,9 @@ int main(int argc, char **argv) {
         exit(1);
     }
   }
-  
-  //create a queue to store all shm segments
-  Queue seg_queue = createQueue(seg_count);
 
   /* SHM initialization...*/
-  int shmfd[seg_count];
-  sem_t *sem_id[seg_count];
+  struct ShmSem shmsem_pool[seg_count];
 
   for(j = 0; j < seg_count; j++) {
 
@@ -143,16 +144,18 @@ int main(int argc, char **argv) {
     printf("Segment %s name is created\n", seg_name);
 
     //create shared memory segment
-    shmfd[j] = shm_open(seg_name, O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG);
+    int shmfd = shm_open(seg_name, O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG);
 
-    if (shmfd[j] < 0) {
+    if (shmfd < 0) {
     	perror("In shm_open()");
     	exit(1);
     }
 
+    shmsem_pool[j].shmfd = shmfd;
+
     printf("%s shared segment is created\n", seg_name);
 
-    ftruncate(shmfd[j], seg_size);
+    ftruncate(shmfd, seg_size);
 
     printf("%s segment is resized to %d\n", seg_name, (int) seg_size);
 
@@ -162,12 +165,13 @@ int main(int argc, char **argv) {
 
     printf("Semaphore %s name is created\n", sem_name);
 
-    sem_id[j] = sem_open(sem_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
+    sem_t *sem_id = sem_open(sem_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
+
+    shmsem_pool[j].sem_id = sem_id;
 
     printf("%s semaphore is created\n", sem_name);
 
-    //add shm sequence number to the segment queue
-    enqueue(seg_queue, j);
+    shmsem_pool[j].inUse = 0;
   }
 
   /*Initializing server*/
@@ -178,7 +182,7 @@ int main(int argc, char **argv) {
   gfserver_setopt(&gfs, GFS_MAXNPENDING, 10);
   gfserver_setopt(&gfs, GFS_WORKER_FUNC, handle_with_cache);
   for(i = 0; i < nworkerthreads; i++)
-    gfserver_setopt(&gfs, GFS_WORKER_ARG, i, seg_queue);
+    gfserver_setopt(&gfs, GFS_WORKER_ARG, i, shmsem_pool);
 
   printf("I am running\n");
 

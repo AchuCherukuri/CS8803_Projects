@@ -5,6 +5,7 @@
 #include <string.h>
 #include <getopt.h>
 #include <pthread.h>
+#include <mqueue.h>
 
 #include "shm_channel.h"
 #include "simplecache.h"
@@ -14,6 +15,8 @@
 static void _sig_handler(int signo){
 	if (signo == SIGINT || signo == SIGTERM){
 		/* Unlink IPC mechanisms here*/
+		mq_unlink("mq_request");
+		mq_unlink("mq_response");
 		exit(signo);
 	}
 }
@@ -44,6 +47,8 @@ int main(int argc, char **argv) {
 	char *cachedir = "locals.txt";
 	char option_char;
 
+	mqd_t request_mq, response_mq;
+	struct mq_attr attr;
 
 	while ((option_char = getopt_long(argc, argv, "t:c:h", gLongOptions, NULL)) != -1) {
 		switch (option_char) {
@@ -77,4 +82,21 @@ int main(int argc, char **argv) {
 	simplecache_init(cachedir);
 
 	//Your code here...
+
+	/* initialize the queue attributes */
+	attr.mq_flags = 0;
+	attr.mq_maxmsg = 10;
+	attr.mq_msgsize = 10240;
+	attr.mq_curmsgs = 0;
+	//open a message queue for receiving request
+	request_mq = mq_open("mq_request", O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &attr);
+	if (request_mq < 0) {
+		perror("In mq_open()");
+		exit(1);
+	}
+	response_mq = mq_open("mq_response", O_CREAT | O_EXCL | O_RDWR, S_IRWXU | S_IRWXG, &attr);
+	if (response_mq < 0) {
+		perror("In mq_open()");
+		exit(1);
+	}
 }
