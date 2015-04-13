@@ -16,11 +16,17 @@
 #define SIG_PF void(*)(int)
 #endif
 
+static minifyjpeg_res *
+_minify_jpeg_proc_1 (char * *argp, struct svc_req *rqstp)
+{
+	return (minify_jpeg_proc_1_svc(*argp, rqstp));
+}
+
 static void
 minify_jpeg_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
-		jpeg_in minify_jpeg_proc_1_arg;
+		char *minify_jpeg_proc_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -32,9 +38,9 @@ minify_jpeg_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		return;
 
 	case MINIFY_JPEG_PROC:
-		_xdr_argument = (xdrproc_t) xdr_jpeg_in;
-		_xdr_result = (xdrproc_t) xdr_jpeg_out;
-		local = (char *(*)(char *, struct svc_req *)) minify_jpeg_proc_1_svc;
+		_xdr_argument = (xdrproc_t) xdr_wrapstring;
+		_xdr_result = (xdrproc_t) xdr_minifyjpeg_res;
+		local = (char *(*)(char *, struct svc_req *)) _minify_jpeg_proc_1;
 		break;
 
 	default:

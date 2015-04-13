@@ -6,11 +6,11 @@
 #include "minifyjpeg.h"
 
 bool_t
-xdr_jpeg_in (XDR *xdrs, jpeg_in *objp)
+xdr_minified_jpeg_t (XDR *xdrs, minified_jpeg_t *objp)
 {
 	register int32_t *buf;
 
-	 if (!xdr_pointer (xdrs, (char **)&objp->arg1, sizeof (char), (xdrproc_t) xdr_char))
+	 if (!xdr_pointer (xdrs, (char **)objp, sizeof (struct jpeg_out), (xdrproc_t) xdr_jpeg_out))
 		 return FALSE;
 	return TRUE;
 }
@@ -20,7 +20,27 @@ xdr_jpeg_out (XDR *xdrs, jpeg_out *objp)
 {
 	register int32_t *buf;
 
-	 if (!xdr_pointer (xdrs, (char **)&objp->res1, sizeof (char), (xdrproc_t) xdr_char))
+	 if (!xdr_u_int (xdrs, &objp->outfile_len))
 		 return FALSE;
+	 if (!xdr_string (xdrs, &objp->outfile_val, ~0))
+		 return FALSE;
+	return TRUE;
+}
+
+bool_t
+xdr_minifyjpeg_res (XDR *xdrs, minifyjpeg_res *objp)
+{
+	register int32_t *buf;
+
+	 if (!xdr_int (xdrs, &objp->errno))
+		 return FALSE;
+	switch (objp->errno) {
+	case 0:
+		 if (!xdr_minified_jpeg_t (xdrs, &objp->minifyjpeg_res_u.minified_jpeg))
+			 return FALSE;
+		break;
+	default:
+		break;
+	}
 	return TRUE;
 }
