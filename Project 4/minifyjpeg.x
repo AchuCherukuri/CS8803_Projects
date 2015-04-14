@@ -17,6 +17,6 @@ union minifyjpeg_res switch (int errno) {
 
 program MINIFY_JPEG_PROG {
   version MINIFY_JPEG_VERS {
-    minifyjpeg_res MINIFY_JPEG_PROC(string) = 1;
+    minifyjpeg_res MINIFY_JPEG_PROC() = 1;
   } = 1;
 } = 0x20000001;
