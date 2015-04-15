@@ -16,7 +16,6 @@ void magickminify_init();
  * and continues for the number of bytes stored in the 
  * return parameter dst_len.
  */
-
 void* magickminify(void* src, ssize_t src_len, ssize_t* dst_len);
 
 /* 

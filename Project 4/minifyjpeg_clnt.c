@@ -10,13 +10,16 @@
 static struct timeval TIMEOUT = { 25, 0 };
 
 minifyjpeg_res *
-minify_jpeg_proc_1(char *arg1,  CLIENT *clnt)
+minify_jpeg_proc_1(char *arg1, int arg2, int arg3,  CLIENT *clnt)
 {
+	minify_jpeg_proc_1_argument arg;
 	static minifyjpeg_res clnt_res;
 
 	memset((char *)&clnt_res, 0, sizeof(clnt_res));
-	if (clnt_call (clnt, MINIFY_JPEG_PROC,
-		(xdrproc_t) xdr_wrapstring, (caddr_t) &arg1,
+	arg.arg1 = arg1;
+	arg.arg2 = arg2;
+	arg.arg3 = arg3;
+	if (clnt_call (clnt, MINIFY_JPEG_PROC, (xdrproc_t) xdr_minify_jpeg_proc_1_argument, (caddr_t) &arg,
 		(xdrproc_t) xdr_minifyjpeg_res, (caddr_t) &clnt_res,
 		TIMEOUT) != RPC_SUCCESS) {
 		return (NULL);

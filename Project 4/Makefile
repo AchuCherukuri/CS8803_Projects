@@ -6,6 +6,8 @@ LIBS = -lpthread
 MAGICK_FLAGS = `pkg-config --cflags MagickCore`
 MAGICK_LIBS = `pkg-config --libs MagickCore`
 
+all: minifyjpeg_main minifyjpeg_svc
+
 #### RPC Client Part ####
 magickminify.o: magickminify.c
 	$(CC) -c $^ $(MAGICK_FLAGS)

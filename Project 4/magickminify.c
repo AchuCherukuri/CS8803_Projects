@@ -28,7 +28,7 @@ void* magickminify(void* src, ssize_t src_len, ssize_t* dst_len){
 
   if (exception->severity != UndefinedException)
     CatchException(exception);
-  if (image == (Image *) NULL)
+  if (resize == (Image *) NULL)
     exit(1);
 
   ans = ImageToBlob(&image_info, resize, &len, exception);
