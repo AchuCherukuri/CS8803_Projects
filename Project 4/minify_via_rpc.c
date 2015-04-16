@@ -7,12 +7,22 @@
 */
 void* minify_via_rpc(CLIENT* clnt, void* src_val, size_t src_len, size_t *dst_len){
     minifyjpeg_res *result;
-    char* source_val = (char*) src_val;
-    result = minify_jpeg_proc_1(source_val, src_len, *dst_len, clnt);
+    void *minified_val;    
+    struct jpeg_in jpeg_src;
+    jpeg_src.src_jpeg_val.src_jpeg_val_val = src_val;
+    jpeg_src.src_jpeg_val.src_jpeg_val_len = (u_int) src_len;
+    jpeg_src.dst_len = (int*) dst_len;
+            
+    result = minify_jpeg_proc_1(jpeg_src, clnt);
     if (result == (minifyjpeg_res *)NULL){
         exit(1);
     }
-    return result;
+    
+    minified_val = (*result).minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val;
+    
+    printf("minify_via_rpc received minified value.\n");
+    
+    return minified_val;
 }
 
 

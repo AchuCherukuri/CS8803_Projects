@@ -17,16 +17,16 @@
 #endif
 
 static minifyjpeg_res *
-_minify_jpeg_proc_1 (minify_jpeg_proc_1_argument *argp, struct svc_req *rqstp)
+_minify_jpeg_proc_1 (jpeg_in  *argp, struct svc_req *rqstp)
 {
-	return (minify_jpeg_proc_1_svc(argp->arg1, argp->arg2, argp->arg3, rqstp));
+	return (minify_jpeg_proc_1_svc(*argp, rqstp));
 }
 
 static void
 minify_jpeg_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 {
 	union {
-		minify_jpeg_proc_1_argument minify_jpeg_proc_1_arg;
+		jpeg_in minify_jpeg_proc_1_arg;
 	} argument;
 	char *result;
 	xdrproc_t _xdr_argument, _xdr_result;
@@ -38,7 +38,7 @@ minify_jpeg_prog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 		return;
 
 	case MINIFY_JPEG_PROC:
-		_xdr_argument = (xdrproc_t) xdr_minify_jpeg_proc_1_argument;
+		_xdr_argument = (xdrproc_t) xdr_jpeg_in;
 		_xdr_result = (xdrproc_t) xdr_minifyjpeg_res;
 		local = (char *(*)(char *, struct svc_req *)) _minify_jpeg_proc_1;
 		break;

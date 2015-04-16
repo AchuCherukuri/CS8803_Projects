@@ -14,28 +14,33 @@ extern "C" {
 #endif
 
 
+struct jpeg_in {
+	struct {
+		u_int src_jpeg_val_len;
+		char *src_jpeg_val_val;
+	} src_jpeg_val;
+	int *dst_len;
+};
+typedef struct jpeg_in jpeg_in;
+
 struct minifyjpeg_res {
 	int errno;
 	union {
-		char *minified_jpeg_val;
+		struct {
+			u_int minified_jpeg_val_len;
+			char *minified_jpeg_val_val;
+		} minified_jpeg_val;
 	} minifyjpeg_res_u;
 };
 typedef struct minifyjpeg_res minifyjpeg_res;
-
-struct minify_jpeg_proc_1_argument {
-	char *arg1;
-	int arg2;
-	int arg3;
-};
-typedef struct minify_jpeg_proc_1_argument minify_jpeg_proc_1_argument;
 
 #define MINIFY_JPEG_PROG 0x20000001
 #define MINIFY_JPEG_VERS 1
 
 #if defined(__STDC__) || defined(__cplusplus)
 #define MINIFY_JPEG_PROC 1
-extern  minifyjpeg_res * minify_jpeg_proc_1(char *, int , int , CLIENT *);
-extern  minifyjpeg_res * minify_jpeg_proc_1_svc(char *, int , int , struct svc_req *);
+extern  minifyjpeg_res * minify_jpeg_proc_1(jpeg_in , CLIENT *);
+extern  minifyjpeg_res * minify_jpeg_proc_1_svc(jpeg_in , struct svc_req *);
 extern int minify_jpeg_prog_1_freeresult (SVCXPRT *, xdrproc_t, caddr_t);
 
 #else /* K&R C */
@@ -48,12 +53,12 @@ extern int minify_jpeg_prog_1_freeresult ();
 /* the xdr functions */
 
 #if defined(__STDC__) || defined(__cplusplus)
+extern  bool_t xdr_jpeg_in (XDR *, jpeg_in*);
 extern  bool_t xdr_minifyjpeg_res (XDR *, minifyjpeg_res*);
-extern  bool_t xdr_minify_jpeg_proc_1_argument (XDR *, minify_jpeg_proc_1_argument*);
 
 #else /* K&R C */
+extern bool_t xdr_jpeg_in ();
 extern bool_t xdr_minifyjpeg_res ();
-extern bool_t xdr_minify_jpeg_proc_1_argument ();
 
 #endif /* K&R C */
 
