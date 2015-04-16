@@ -6,7 +6,8 @@
 * stored in the array src_val and having src_len bytes.
 */
 void* minify_via_rpc(CLIENT* clnt, void* src_val, size_t src_len, size_t *dst_len){
-    minifyjpeg_res *result;
+    minifyjpeg_res *result = malloc(sizeof(struct minifyjpeg_res));
+    result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val = calloc(src_len,sizeof(char));
     void *minified_val;    
     struct jpeg_in jpeg_src;
     jpeg_src.src_jpeg_val.src_jpeg_val_val = src_val;
@@ -15,19 +16,38 @@ void* minify_via_rpc(CLIENT* clnt, void* src_val, size_t src_len, size_t *dst_le
             
     result = minify_jpeg_proc_1(jpeg_src, clnt);
     
-    if (result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val == NULL){
-        printf("result_val is NULL, content is %x.\n", result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val);
+    *dst_len = (size_t) result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_len;
+    
+    printf("received file length is %d.\n", (int)result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_len);
+    
+    if (result == (minifyjpeg_res *)NULL) {
+        printf("result object is NULL");
         exit(1);
     }
     
+    printf("via rpc line26.\n");
+    
+    /*
+    result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val = src_val;
+    *dst_len = src_len;
+    */
+    
+    /*if (result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val == (char*)NULL){
+        printf("result_val is NULL, content is %x.\n", *result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val);
+        exit(1);
+    }*/
+    
+    printf("via rpc line34.\n");
+    
     minified_val = (void*)result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val;
     
-    if (minified_val == (minifyjpeg_res*)NULL){
+    if (minified_val == (void*)NULL){
         printf("minified_val is null.\n");
         exit(1);
     }
     
     printf("minify_via_rpc received minified value.\n");
+    printf("received file length is %d.\n", (int)*dst_len);
     
     return minified_val;
 }
