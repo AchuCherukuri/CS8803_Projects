@@ -14,11 +14,18 @@ void* minify_via_rpc(CLIENT* clnt, void* src_val, size_t src_len, size_t *dst_le
     jpeg_src.dst_len = (int*) dst_len;
             
     result = minify_jpeg_proc_1(jpeg_src, clnt);
-    if (result == (minifyjpeg_res *)NULL){
+    
+    if (result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val == NULL){
+        printf("result_val is NULL, content is %x.\n", result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val);
         exit(1);
     }
     
-    minified_val = (*result).minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val;
+    minified_val = (void*)result->minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val;
+    
+    if (minified_val == (minifyjpeg_res*)NULL){
+        printf("minified_val is null.\n");
+        exit(1);
+    }
     
     printf("minify_via_rpc received minified value.\n");
     

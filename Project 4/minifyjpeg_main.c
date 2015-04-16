@@ -111,7 +111,7 @@ static void *worker_main(void *arg){
     
     printf("received dst_val from the minify_via_rpc(), content: %x.\n", dst_val);
 
-    write_to_file(request->outputfilename, dst_val, dst_len);
+    write_to_file(request->outputfilename, dst_val, (ssize_t)dst_len);
     
     printf("minified jpeg has been written.\n");
 
