@@ -7,15 +7,12 @@ minifyjpeg_res *minify_jpeg_proc_1_svc(jpeg_in src_jpeg, struct svc_req *req){
     static minifyjpeg_res res;
     void *src_val = src_jpeg.src_jpeg_val.src_jpeg_val_val;
     ssize_t src_len = src_jpeg.src_jpeg_val.src_jpeg_val_len;
-    //ssize_t *dst_len = (ssize_t*) src_jpeg.dst_len;
     void *dst_val;
     
-    printf("Server started... waiting for request...\n");
+    //printf("Server started... waiting for request...\n");
     
     magickminify_init();
     
-    printf("magicminify initialized.\n");
-    printf("original file length: %d.\n", (int)src_len);
     
     dst_val = magickminify(src_val, src_len, (ssize_t*)src_jpeg.dst_len);
     
@@ -23,38 +20,16 @@ minifyjpeg_res *minify_jpeg_proc_1_svc(jpeg_in src_jpeg, struct svc_req *req){
         printf("magickminify() returned NULL");
         exit(1);
     }
-    
-    printf("picture minified, content is %x.\n", (char*)dst_val);
-    printf("modified picture length is %d.\n", *src_jpeg.dst_len);
-    
-    
-    /* My own code
-      FILE *outfile;
 
-      /* open an existing file for reading */
-      outfile = fopen("paraglider_small_server_output.jpg", "w");
-       
-      /* quit if the file does not exist */
-      if(outfile == NULL)
-        return 1;
-
-      fwrite((char*) dst_val, 1, (ssize_t*)src_jpeg.dst_len, outfile);
-      fclose(outfile);
-
-      return 0;
-    */
+    //printf("modified picture length is %d.\n", *src_jpeg.dst_len);
     
-    res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val = strdup((char*)dst_val);
+    res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val = dst_val;
     res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_len = (u_int)*src_jpeg.dst_len;
     
     if (res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val == (char*)NULL) {
         printf("result jgep val is still NULL, didn't get data from dst_val\n");
         exit(1);
     }
-    
-    //&res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val = (char*) dst_val;
-    
-    printf("dst_val assigned to result union struct, content is %x.\n", res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val);  
     
     return &res;
 }

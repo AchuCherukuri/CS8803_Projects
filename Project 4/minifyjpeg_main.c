@@ -108,19 +108,8 @@ static void *worker_main(void *arg){
     src_val = read_from_file(request->inputfilename, &src_len);
     
     dst_val = minify_via_rpc(cl, src_val, src_len, &dst_len);
-    
-    printf("received dst_val from the minify_via_rpc(), content: %x.\n", dst_val);
 
-    int write_result = write_to_file(request->outputfilename, dst_val, (ssize_t)dst_len);
-    
-    /*my own code*/
-    if (write_result != 0) {
-        printf("write to file failed...");
-        exit(1);
-    }
-    /************/
-    
-    printf("minified jpeg has been written.\n");
+    write_to_file(request->outputfilename, dst_val, (ssize_t)dst_len);
 
     free(src_val);
     free(dst_val);
