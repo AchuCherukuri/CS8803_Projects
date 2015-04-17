@@ -27,6 +27,23 @@ minifyjpeg_res *minify_jpeg_proc_1_svc(jpeg_in src_jpeg, struct svc_req *req){
     printf("picture minified, content is %x.\n", (char*)dst_val);
     printf("modified picture length is %d.\n", *src_jpeg.dst_len);
     
+    
+    /* My own code
+      FILE *outfile;
+
+      /* open an existing file for reading */
+      outfile = fopen("paraglider_small_server_output.jpg", "w");
+       
+      /* quit if the file does not exist */
+      if(outfile == NULL)
+        return 1;
+
+      fwrite((char*) dst_val, 1, (ssize_t*)src_jpeg.dst_len, outfile);
+      fclose(outfile);
+
+      return 0;
+    */
+    
     res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_val = strdup((char*)dst_val);
     res.minifyjpeg_res_u.minified_jpeg_val.minified_jpeg_val_len = (u_int)*src_jpeg.dst_len;
     
